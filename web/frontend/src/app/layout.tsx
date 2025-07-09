@@ -35,7 +35,7 @@ export default function RootLayout() {
       <div className="flex flex-col justify-center min-h-screen">
         <header className="bg-primary-foreground w-full">
           <div className="flex justify-between text-primary-background p-4 max-w-screen-lg mx-auto">
-          <Link className="cursor-pointer" to="/">
+          <Link className="cursor-pointer flex items-center" to="/">
             <Brandmark className="inline-block h-8 max-w-none fill-foreground" />
           </Link>
           <div className="hidden sm:flex gap-2 items-center">
