@@ -1,30 +1,27 @@
 package recommend
 
 import (
-	"math"
 	"sort"
 
 	"backendgo/internal/courses"
 	"backendgo/internal/embeddings"
 	"backendgo/internal/types"
+	"gonum.org/v1/gonum/floats"
 )
 
-func norm(v []float32) float32 {
-	var s float64
-	for _, x := range v { s += float64(x) * float64(x) }
-	return float32(math.Sqrt(s))
+func to64(v []float32) []float64 {
+	out := make([]float64, len(v))
+	for i, x := range v { out[i] = float64(x) }
+	return out
 }
 
-func dot(a, b []float32) float32 {
-	var s float64
-	for i := range a { s += float64(a[i]) * float64(b[i]) }
-	return float32(s)
-}
-
-func cosine(a, b []float32) float32 {
-	na := norm(a); nb := norm(b)
+func cosine(a32, b32 []float32) float32 {
+	a := to64(a32)
+	b := to64(b32)
+	na := floats.Norm(a, 2)
+	nb := floats.Norm(b, 2)
 	if na == 0 || nb == 0 { return 0 }
-	return dot(a, b) / (na * nb)
+	return float32(floats.Dot(a, b) / (na * nb))
 }
 
 func RecommendMaxWithCombinations(liked, disliked, skipped []string, cc *courses.CourseClient, n int, emb *embeddings.Matrix) []types.CourseWithId {
@@ -53,28 +50,25 @@ func RecommendMaxWithCombinations(liked, disliked, skipped []string, cc *courses
 		}
 	}
 
-	// Precompute normalized rows
-	normRows := make([][]float32, emb.Rows)
+	// Precompute normalized rows in float64-compatible form
+	normRows := make([][]float64, emb.Rows)
 	for i := 0; i < emb.Rows; i++ {
-		row := emb.Row(i)
-		n := norm(row)
-		normed := make([]float32, emb.Cols)
-		if n == 0 { copy(normed, row) } else {
-			for k := 0; k < emb.Cols; k++ { normed[k] = row[k] / n }
-		}
-		normRows[i] = normed
+		row := to64(emb.Row(i))
+		n := floats.Norm(row, 2)
+		if n != 0 { floats.Scale(1.0/n, row) }
+		normRows[i] = row
 	}
 
 	scores := make([]float32, emb.Rows)
 	bestPair := make([][2]int, emb.Rows)
 	for i := 0; i < emb.Rows; i++ { scores[i] = -1e9 }
 	for tIdx, t := range targets {
-		nt := norm(t); if nt == 0 { continue }
+		tt := to64(t)
+		n := floats.Norm(tt, 2)
+		if n == 0 { continue }
+		floats.Scale(1.0/n, tt)
 		for i := 0; i < emb.Rows; i++ {
-			// cosine = dot(normRows[i], t/|t|)
-			var s float64
-			for k := 0; k < emb.Cols; k++ { s += float64(normRows[i][k]) * float64(t[k]/nt) }
-			sc := float32(s)
+			sc := float32(floats.Dot(normRows[i], tt))
 			if sc > scores[i] {
 				scores[i] = sc
 				bestPair[i] = pairs[tIdx]

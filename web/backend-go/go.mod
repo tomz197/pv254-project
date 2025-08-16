@@ -2,7 +2,10 @@ module backendgo
 
 go 1.22.0
 
-require go.mongodb.org/mongo-driver v1.16.0
+require (
+	go.mongodb.org/mongo-driver v1.16.0
+	gonum.org/v1/gonum v0.15.0
+)
 
 require (
 	github.com/golang/snappy v0.0.4 // indirect

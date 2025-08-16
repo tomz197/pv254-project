@@ -40,11 +40,10 @@ func RecommendKeywords(liked, disliked, skipped []string, cc *courses.CourseClie
 			// compute recommended_from: top 2 liked by direct score m[liked,row]
 			var rf []string
 			for _, li := range likedIdx {
-				idx, val := m.Row(li)
-				for j, col := range idx {
+				idx, _ := m.Row(li)
+				for _, col := range idx {
 					if col == s.Idx {
 						if v, ok := cc.GetCourseByID(li); ok { rf = append(rf, v.CODE) }
-						_ = val[j]
 						break
 					}
 				}
