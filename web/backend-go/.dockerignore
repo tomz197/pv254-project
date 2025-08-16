@@ -1,0 +1,11 @@
+**/.git
+**/.github
+**/.idea
+**/.vscode
+**/node_modules
+**/dist
+**/build
+**/*.log
+**/*.tmp
+**/*.cache
+**/.DS_Store
